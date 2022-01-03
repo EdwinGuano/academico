@@ -1,0 +1,163 @@
+<template>
+  <div>
+    <h1 class="text-center">Gestionar Secciones</h1>
+    
+   
+  
+
+   <table class="table table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Código</th>
+          <th scope="col">Nombre</th>
+          <th scope="col" colspan="2" class="text-center">Accion</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="sec in seccions.data" :key="sec.id">
+          <th scope="row">{{ sec.id }}</th>
+          <td>{{ sec.cod_sec }}</td>
+          <td>{{ sec.nom_sec }}</td>
+          <td>
+            <button  @click="modificar=true; abrirModal(sec);" class="btn btn-warning">Editar</button>
+          </td>
+          <td>
+            <button @click="eliminar(sec.id)" class="btn btn-danger">
+              Eliminar
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="now">
+      <div class="col-3 md-3 text-right text-primary">
+        {{seccions.from}} - {{seccions.to}} /total:{{seccions.total}}
+      </div>
+      <div class="col-2 md-2">
+        <select class="form-control" v-model="pagination.per_page" @change="listar();" >
+          <option value="3" >3</option>
+          <option value="5">5</option>
+          <option value="8">8</option>
+        </select>
+
+        
+      </div>
+
+      <div class="col 7 md-7">
+        <nav> 
+          <ul class="pagination">
+            <li class="page-item" :class="{disabled:pagination.page==1}"><a href="#" class="page-link "  @click="pagination.page=1; listar();">&laquo;</a></li>
+            <li class="page-item" :class="{disabled:pagination.page==1}"><a href="#" class="page-link"   @click="pagination.page--; listar();">&lt;</a></li>
+            <li class="page-item" v-for="n in paginas" :key="n" :class="{active:pagination.page==n}"><a href="#" class="page-link"  @click="pagination.page=n; listar();">{{n}}</a></li>
+            <li class="page-item" :class="{disabled:pagination.page==seccions.last_page}"><a href="#" class="page-link"  @click="pagination.page++; listar();">&gt;</a></li>
+            <li class="page-item" :class="{disabled:pagination.page==seccions.last_page}"><a href="#" class="page-link"  @click="pagination.page=seccions.last_page; listar();">&raquo;</a></li>
+          </ul>
+       </nav>    
+      </div>
+
+    </div>
+
+
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      seccion:{   },
+      id:0,
+      modificar:true,
+      modal:0,
+      tituloModal:'',
+      seccions: [],
+     
+      pagination:{
+         page:1,
+         per_page:2,
+          },
+      paginas:[],
+    };
+  },
+  methods: {
+    async listar() {
+      const res = await axios.get('api/seccion/', {params: this.pagination});
+      this.seccions = res.data;
+      this.listarPaginas();
+    },
+    listarPaginas(){
+      const n=2
+      let arrayN=[]
+      let ini = this.pagination.page -2
+      if(ini<1){
+        ini=1
+      }     
+      let fin = this.pagination.page +2
+      if(fin>this.seccions.last_page){
+        fin=this.seccions.last_page
+      } 
+
+      for(let i=ini; i<=fin;i++){
+        arrayN.push(i)
+      }
+      this.paginas=arrayN
+
+    },
+    
+
+    async eliminar(id) {
+      const res = await axios.delete('http://127.0.0.1:8000/api/seccion/' + id);
+      this.listar();
+    },
+    async guardar() {
+      if(this.modificar){
+        const res = await axios.put('http://127.0.0.1:8000/api/seccion/'+ this.id, { 
+          
+          'cod_sec': this.seccion.codigo,
+          'nom_sec': this.seccion.nombre,
+
+         });
+      }else{
+        const res = await axios.post('http://127.0.0.1:8000/api/seccion/', { 
+         
+          'id': this.update,
+          'cod_sec': this.seccion.codigo,
+          'nom_sec': this.seccion.nombre,
+         
+         });
+      }
+      this.cerrarModal();
+      this.listar();
+    },
+    abrirModal(data={}){
+      this.modal=1;
+      if(this.modificar){
+        this.id=data.id;
+        this.tituloModal="Modificar Seccion";
+        this.seccion.codigo=data.cod_sec;
+        this.seccion.nombre=data.nom_sec;
+      }else{
+        this.id=0;
+        this.tituloModal="Crear Seccion";
+        this.seccion.codigo='';
+        this.seccion.nombre='';
+      }
+    },
+    cerrarModal(){
+      this.modal=0;
+    },
+  },
+  created() {
+    this.listar();
+  },
+};
+</script>
+
+<style>
+  .mostrar{
+    display: list-item;
+    opacity: 1;
+    background: rgba(75, 56, 143, 0.705);
+  }
+</style>
